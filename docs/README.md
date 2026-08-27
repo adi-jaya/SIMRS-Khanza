@@ -43,7 +43,7 @@ graph TD
 - **Engine Database Terpadu**: Berinteraksi langsung dengan database relasional MySQL/MariaDB bernama `sik` yang memuat lebih dari 1.000 tabel transaksi medis, keuangan, farmasi, kepegawaian, dan logistik.
 - **Sistem Keamanan Terenkripsi**: Konfigurasi koneksi database diamankan menggunakan algoritma enkripsi simetris **AES-128 bit** (`setting/database.xml`).
 - **Integrasi Web Service Lengkap (*Bridging*)**: Menyediakan modul terintegrasi untuk BPJS Kesehatan (VClaim, Antrean RS, Aplicares, PCare, Mobile JKN), Kemenkes SatuSehat (OAuth2 & JSON FHIR Resource), serta integrasi LIS/RIS.
-- **Mesin Pelaporan Standar Industri**: Template laporan dokumen medis dan bukti transaksi dikelola melalui berkas desain **JasperReports** (`.jrxml` $\rightarrow$ `.jasper`).
+- **Mesin Pelaporan Standar Industri**: Template laporan dokumen medis dan bukti transaksi dikelola melalui berkas desain **JasperReports** (`.jrxml` → `.jasper`).
 - **Lisensi**: Proyek ini dikembangkan di bawah lisensi *open-source* (GPL / YASKI - Yayasan SIMRS Khanza Indonesia) dengan komitmen keterbukaan kode demi kemandirian teknologi faskes nasional.
 
 > [!NOTE]

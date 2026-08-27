@@ -477,7 +477,7 @@ Jika gagal login atau database `sik` tidak ditemukan, buat database dan impor sk
 ```sql
 CREATE DATABASE sik CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sik;
-SOURCE /Users/adijaya/MyFiles/Projects/SIMRS-Khanza/sik.sql;
+SOURCE ./sik.sql; -- atau: SOURCE /path/to/SIMRS-Khanza/sik.sql;
 ```
 
 **Langkah 3: Perbaiki Konfigurasi Terenkripsi di `setting/database.xml`**
@@ -588,7 +588,7 @@ flowchart LR
 #### Gejala:
 Saat menjalankan perintah `ant compile` atau `ant clean jar`, proses kompilasi berhenti di tengah jalan dengan output error:
 ```text
-[javac] Compiling 3542 source files to /Users/adijaya/MyFiles/Projects/SIMRS-Khanza/build/classes
+[javac] Compiling 3542 source files to /path/to/SIMRS-Khanza/build/classes
 [javac] The system is out of resources.
 [javac] java.lang.OutOfMemoryError: Java heap space
 [javac]     at com.sun.tools.javac.util.Bits.dup(Bits.java:78)

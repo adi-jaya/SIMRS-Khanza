@@ -484,7 +484,7 @@ Anda dapat menjalankan aplikasi menggunakan salah satu dari cara berikut:
    ```
 3. **Via Shortcut VS Code:**
    - Tekan `Cmd + Shift + B` (macOS) atau `Ctrl + Shift + B` (Windows/Linux) untuk *Build*.
-   - Buka menu *Terminal* $\rightarrow$ *Run Task...* $\rightarrow$ pilih **Ant: Run**.
+   - Buka menu *Terminal* → *Run Task...* → pilih **Ant: Run**.
 
 ### Kredensial Login Default
 Ketika jendela GUI login SIMRS-Khanza muncul, Anda dapat masuk menggunakan kredensial standar administrator:
