@@ -9,6 +9,13 @@
   "java.project.referencedLibraries": [
     "lib/**/*.jar"
   ],
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-1.8",
+      "path": "/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home",
+      "default": true
+    }
+  ],
   "java.compile.nullAnalysis.mode": "disabled",
   "java.autobuild.enabled": false,
   "java.jdt.ls.vmargs": "-XX:+UseG1GC -XX:+UseStringDeduplication -Xms1G -Xmx4G -Dsun.zip.disableMemoryMapping=true -Xlog:disable",
