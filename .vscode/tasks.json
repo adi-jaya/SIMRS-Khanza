@@ -11,6 +11,8 @@
   "windows": {
     "options": {
       "env": {
+        "JAVA_HOME": "C:\\Program Files\\BellSoft\\LibericaJDK-15-Full",
+        "PATH": "C:\\Program Files\\BellSoft\\LibericaJDK-15-Full\\bin;${env:PATH}",
         "ANT_OPTS": "-Xss64m -Xmx2048m"
       }
     }
