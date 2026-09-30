@@ -5,6 +5,7 @@
 
 # Root library directory (physical copy)
 /lib/
+/lib32/
 
 # OS specific files
 .DS_Store
