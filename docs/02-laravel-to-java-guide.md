@@ -1,4 +1,4 @@
-[← Sebelumnya: Setup Environment](01-getting-started.md) | [Daftar Isi](README.md) | [Selanjutnya: Arsitektur & Kode Sumber →](03-architecture-and-codebase.md)
+[← Sebelumnya: Setup Environment (Non-NetBeans / VS Code)](01-getting-started-non-netbeans-vscode.md) | [Daftar Isi](README.md) | [Selanjutnya: Arsitektur & Kode Sumber →](03-architecture-and-codebase.md)
 
 ---
 
@@ -228,7 +228,7 @@ flowchart LR
     M -->|JIT Compiler| N[Instruksi Native CPU\nx86_64 / ARM64]
 ```
 
-* **JDK (Java Development Kit):** Perangkat lunak lengkap untuk pengembang, berisi compiler (`javac`), pembuat arsip (`jar`), debugger, dan runtime (`java`). Pada SIMRS-Khanza, kita menggunakan **JDK 8 (JavaSE-1.8)**.
+* **JDK (Java Development Kit):** Perangkat lunak lengkap untuk pengembang, berisi compiler (`javac`), pembuat arsip (`jar`), debugger, dan runtime (`java`). Pada SIMRS-Khanza, kode dikompilasi dengan target **Java 1.8**, dengan rekomendasi instalasi **BellSoft Liberica JDK 15 Full** (atau **11 Full**) agar mendukung pustaka JavaFX modern pada folder `lib/` (baca panduan lengkap di [Modul 01](01-getting-started-non-netbeans-vscode.md#2-mengenal--mengonfigurasi-java-development-kit-jdk)).
 * **JRE (Java Runtime Environment):** Paket minimal hanya untuk menjalankan aplikasi Java (berisi JVM dan pustaka standar Java), tanpa compiler `javac`.
 * **JVM (Java Virtual Machine):** Mesin virtual yang bertugas membaca instruksi *bytecode* dan menerjemahkannya menjadi instruksi biner native prosesor secara *Just-In-Time* (JIT). Inilah alasan slogan Java *"Write Once, Run Anywhere"* terwujud.
 * **Bytecode (`.class`):** File biner hasil kompilasi dari kode sumber `.java`. Berbeda dengan file binary C/C++ yang terikat OS tertentu, bytecode Java dapat dijalankan di OS manapun asalkan memiliki JVM yang sesuai.
@@ -262,7 +262,7 @@ flowchart LR
 
 ### C. Build Automation Tool (Apache Ant)
 
-* **Apache Ant (`build.xml`):** Alat otomatisasi build berbasis XML. Jika di dunia web modern Anda mengenal Webpack, Vite, atau Composer Scripts, maka di dunia Java tradisional Apache Ant adalah standar build runner.
+* **Apache Ant (`build.xml`):** Alat otomatisasi build berbasis XML. Jika di dunia web modern Anda mengenal Webpack, Vite, Gulp, atau Composer Scripts, maka di dunia Java tradisional Apache Ant adalah standar build runner otomatisasi kompilasi. Pelajari konsep dan alasan penggunaannya di [Modul 01: Setup Non-NetBeans (VS Code & CLI)](01-getting-started-non-netbeans-vscode.md#3-mengenal--mengonfigurasi-apache-ant-build-tool).
 * **Targets di `build.xml`:**
   * `ant compile`: Mengompilasi semua file `.java` di folder `src/` menjadi `.class` di folder `build/classes/`.
   * `ant run`: Mengompilasi dan langsung mengeksekusi aplikasi dari terminal.
@@ -461,4 +461,4 @@ Lanjutkan pembelajaran Anda ke **Modul 3** untuk mempelajari anatomi folder `src
 
 ---
 
-[← Sebelumnya: Setup Environment](01-getting-started.md) | [Daftar Isi](README.md) | [Selanjutnya: Arsitektur & Kode Sumber →](03-architecture-and-codebase.md)
+[← Sebelumnya: Setup Environment (Non-NetBeans / VS Code)](01-getting-started-non-netbeans-vscode.md) | [Daftar Isi](README.md) | [Selanjutnya: Arsitektur & Kode Sumber →](03-architecture-and-codebase.md)

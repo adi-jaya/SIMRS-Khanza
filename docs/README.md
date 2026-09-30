@@ -57,7 +57,7 @@ Dokumentasi ini dirancang modular agar Anda dapat langsung mengakses topik yang 
 
 | Modul | Nama Panduan | Target Pembaca & Cakupan Materi | Tautan Modul |
 | :---: | :--- | :--- | :---: |
-| **01** | **Setup Environment dari Nol** | **Onboarding & Teknisi Baru**: Panduan instalasi JDK 8 (Temurin), Apache Ant, MySQL/MariaDB `sik`, penataan folder `lib/` (300+ JAR), konfigurasi VS Code teroptimasi, hingga aplikasi berhasil login. | [Buka Panduan Modul 01](01-getting-started.md) |
+| **01** | **Setup Non-NetBeans (VS Code & CLI)** | **Onboarding & Teknisi Baru (Non-NetBeans)**: Panduan instalasi JDK, Apache Ant, MySQL/MariaDB `sik`, penataan folder `lib/`, konfigurasi VS Code teroptimasi, penyetelan memori compiler, hingga build via CLI. | [Buka Panduan Modul 01](01-getting-started-non-netbeans-vscode.md) |
 | **02** | **Panduan Konsep (Laravel → Java)** | **Web Developer / Transisi**: Jembatan mental model arsitektur web (Stateless/Blade/Eloquent/Middleware) menuju arsitektur desktop Java Swing (Stateful/Matisse/JDBC/EDT Threading) dilengkapi glosarium istilah Java. | [Buka Panduan Modul 02](02-laravel-to-java-guide.md) |
 | **03** | **Arsitektur & Anatomi Kode Sumber** | **Software Architect & Core Dev**: Bedah direktori package `src/`, core engine `src/fungsi/` (`koneksiDB`, `sekuel`, `validasi`, `akses`), mekanisme enkripsi AES-128 `setting/database.xml`, anatomi NetBeans Matisse GUI, serta protokol bridging BPJS & SatuSehat. | [Buka Panduan Modul 03](03-architecture-and-codebase.md) |
 | **04** | **Alur Kerja Pengembangan & Troubleshooting** | **Daily Engineer & DevOps**: Siklus *build* Apache Ant (`compile`, `run`, `jar`), *fast-iteration workflow* VS Code, manajemen Git & sinkronisasi upstream resmi, serta katalog solusi error database, memory, dan IDE. | [Buka Panduan Modul 04](04-development-workflow.md) |
@@ -89,8 +89,8 @@ graph LR
     end
 ```
 
-- **Jalur 1 — Pengembang Baru (*Fresh Onboarding*)**: Mulai dari [Modul 01](01-getting-started.md) untuk setup environment lokal, lanjutkan ke [Modul 03](03-architecture-and-codebase.md) untuk memahami struktur folder, lalu pelajari alur build di [Modul 04](04-development-workflow.md) dan praktikkan [Modul 05](05-feature-roadmap-and-recipes.md).
-- **Jalur 2 — Pengembang Web (*Laravel/Node.js/Django*)**: Wajib membaca [Modul 02](02-laravel-to-java-guide.md) terlebih dahulu untuk memetakan analogi konsep web ke desktop, kemudian ikuti [Modul 01](01-getting-started.md) dan [Modul 03](03-architecture-and-codebase.md).
+- **Jalur 1 — Pengembang Baru (*Fresh Onboarding*)**: Mulai dari [Modul 01 (Non-NetBeans/VS Code)](01-getting-started-non-netbeans-vscode.md) untuk setup environment lokal, lanjutkan ke [Modul 03](03-architecture-and-codebase.md) untuk memahami struktur folder, lalu pelajari alur build di [Modul 04](04-development-workflow.md) dan praktikkan [Modul 05](05-feature-roadmap-and-recipes.md).
+- **Jalur 2 — Pengembang Web (*Laravel/Node.js/Django*)**: Wajib membaca [Modul 02](02-laravel-to-java-guide.md) terlebih dahulu untuk memetakan analogi konsep web ke desktop, kemudian ikuti [Modul 01](01-getting-started-non-netbeans-vscode.md) dan [Modul 03](03-architecture-and-codebase.md).
 - **Jalur 3 — Penanganan Masalah & Pemeliharaan (*Maintenance*)**: Buka langsung [Modul 04 (Katalog Troubleshooting)](04-development-workflow.md#4-katalog-troubleshooting-komprehensif) dan [Modul 03 (Bedah Core Engine)](03-architecture-and-codebase.md#2-bedah-core-engine-di-srcfungsi).
 
 ---
@@ -233,7 +233,7 @@ Berikut struktur berkas lengkap di dalam direktori `docs/`:
 ```
 docs/
 ├── README.md                              # (Modul 0) Hub Navigasi Utama, Ringkasan, & Cheatsheet CLI
-├── 01-getting-started.md                  # (Modul 1) Setup Environment dari Nol (macOS, Linux, Windows)
+├── 01-getting-started-non-netbeans-vscode.md # (Modul 1) Setup Environment Non-NetBeans (VS Code / CLI) (macOS & Windows)
 ├── 02-laravel-to-java-guide.md            # (Modul 2) Jembatan Konsep Laravel vs Java & Glosarium
 ├── 03-architecture-and-codebase.md        # (Modul 3) Arsitektur Kode, Core Engine, Database & Bridging
 ├── 04-development-workflow.md             # (Modul 4) Alur Kerja Ant, VSCode Tasks, Git & Troubleshooting
