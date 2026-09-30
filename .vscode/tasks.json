@@ -1,8 +1,25 @@
 {
   "version": "2.0.0",
-  "options": {
-    "env": {
-      "JAVA_HOME": "/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home"
+  "osx": {
+    "options": {
+      "env": {
+        "JAVA_HOME": "/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home",
+        "ANT_OPTS": "-Xss64m -Xmx2048m"
+      }
+    }
+  },
+  "windows": {
+    "options": {
+      "env": {
+        "ANT_OPTS": "-Xss64m -Xmx2048m"
+      }
+    }
+  },
+  "linux": {
+    "options": {
+      "env": {
+        "ANT_OPTS": "-Xss64m -Xmx2048m"
+      }
     }
   },
   "tasks": [

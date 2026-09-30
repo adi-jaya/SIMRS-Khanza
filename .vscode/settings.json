@@ -12,8 +12,15 @@
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-1.8",
-      "path": "/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home",
-      "default": true
+      "path": "/Library/Java/JavaVirtualMachines/temurin-8.jdk/Contents/Home"
+    },
+    {
+      "name": "JavaSE-1.8",
+      "path": "C:/Program Files/BellSoft/LibericaJDK-15-Full"
+    },
+    {
+      "name": "JavaSE-1.8",
+      "path": "C:/Program Files/Eclipse Adoptium/jdk-8.0.504.1-hotspot"
     }
   ],
   "java.compile.nullAnalysis.mode": "disabled",
