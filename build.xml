@@ -107,4 +107,28 @@
             <fileset dir="gambar/" includes="**/*.png, **/*.jpg" />
         </copy>
     </target>
+
+    <target name="-pre-init">
+        <available file="lib/javafx.graphics.jar" property="has.modern.javafx"/>
+        <condition property="unsupported.java8">
+            <and>
+                <isset property="has.modern.javafx"/>
+                <matches pattern="^1\.8" string="${java.version}"/>
+            </and>
+        </condition>
+        <fail if="unsupported.java8">
+================================================================================
+[KESALAHAN VERSI JAVA]
+SIMRS-Khanza tidak dapat dikompilasi menggunakan Java 8 (${java.version})
+karena pustaka JavaFX di folder 'lib/' membutuhkan Java 11/15 (Bytecode 55.0).
+
+Solusi:
+1. Gunakan skrip bantu:
+   .\compile.bat compile   (Windows)
+   ./compile.sh compile    (macOS / Linux)
+
+2. Atau gunakan BellSoft Liberica JDK 15 Full sebagai JAVA_HOME.
+================================================================================
+        </fail>
+    </target>
 </project>
