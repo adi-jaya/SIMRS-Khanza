@@ -28,10 +28,11 @@ Modul ini mencakup instalasi JDK, Apache Ant, penanganan memori compiler, konfig
   - [3.5 Konfigurasi Memori Ant (`ANT_OPTS`) — Wajib untuk SIMRS-Khanza](#35-konfigurasi-memori-ant-ant_opts--wajib-untuk-simrs-khanza)
   - [💡 Skrip Cepat Setup Seluruh Environment Variable di Windows (PowerShell)](#-skrip-cepat-setup-seluruh-environment-variable-di-windows-powershell)
 - [4. Setup Database MySQL / MariaDB](#4-setup-database-mysql--mariadb)
-  - [1. Menjalankan Service Database](#1-menjalankan-service-database)
-  - [2. Membuat Database `sik`](#2-membuat-database-sik)
-  - [3. Mengimpor Skema Data (`sik.sql`)](#3-mengimpor-skema-data-siksql)
-  - [4. Konfigurasi Kredensial Koneksi (`setting/database.xml`)](#4-konfigurasi-kredensial-koneksi-settingdatabasexml)
+  - [4.1 Pemilihan Engine Database: MariaDB vs MySQL 8.x (KRUSIAL!)](#41-pemilihan-engine-database-mariadb-vs-mysql-8x-krusial)
+  - [4.2 Menjalankan Service Database (Laragon & Layanan Mandiri)](#42-menjalankan-service-database-laragon--layanan-mandiri)
+  - [4.3 Membuat Database & Mengimpor Skema (`sik.sql`)](#43-membuat-database--mengimpor-skema-siksql)
+  - [4.4 Konfigurasi Kredensial: `setting/database.xml` vs `setting/database.ini`](#44-konfigurasi-kredensial-settingdatabasexml-vs-settingdatabaseini)
+  - [4.5 Troubleshooting: Error `Table doesn't exist` (`setting`, `user`, `set_tni_polri`)](#45-troubleshooting-error-table-doesnt-exist-setting-user-set_tni_polri)
 - [5. Penanganan Dependensi Fisik (Misteri Folder `lib/`)](#5-penanganan-dependensi-fisik-misteri-folder-lib)
   - [Mengapa Folder `lib/` Masuk `.gitignore`?](#mengapa-folder-lib-masuk-gitignore)
   - [Sumber Unduh Resmi Folder `lib/`](#sumber-unduh-resmi-folder-lib)
@@ -430,54 +431,138 @@ Untuk memverifikasi variabel lingkungan yang telah terdaftar di PowerShell:
 
 ## 4. Setup Database MySQL / MariaDB
 
-SIMRS-Khanza membutuhkan basis data relasional MySQL atau MariaDB. Seluruh data transaksi pasien, master obat, tarif tindakan, rekam medis elektronik (RME), dan log sistem disimpan di dalam skema bernama `sik`.
+SIMRS-Khanza membutuhkan basis data relasional MySQL atau MariaDB. Seluruh data transaksi pasien, master obat, tarif tindakan, rekam medis elektronik (RME), dan log sistem disimpan di dalam skema database (`db_khanza_simrs` atau `sik`).
 
 ```mermaid
 flowchart TD
-    A[Jalankan MySQL Service Port 3306] --> B[Buat Database: sik]
-    B --> C[Import Schema Utama: sik.sql]
-    C --> D[Import Schema Tambahan: sik_bridging_lab.sql dll]
-    D --> E[Konfigurasi Koneksi di setting/database.xml]
+    A["Pilih Database Engine<br>(MariaDB 10.4-10.11 / MySQL 5.7)"] --> B["Jalankan Service Port 3306"]
+    B --> C["Buat Database<br>(db_khanza_simrs / sik)"]
+    C --> D["Import Schema Utama: sik.sql<br>(Pastikan ~1.182 Tabel Terbuat)"]
+    D --> E["Konfigurasi setting/database.xml<br>(Enkripsi AES-128)"]
+    E --> F["Validasi Jalannya Aplikasi via ant run"]
 ```
 
-### 1. Menjalankan Service Database
-Pastikan database server Anda aktif di port default `3306`:
+### 4.1 Pemilihan Engine Database: MariaDB vs MySQL 8.x (KRUSIAL!)
+
+> [!WARNING]
+> **SANGAT PENTING: Gunakan MariaDB (10.4 s/d 10.11) atau MySQL 5.7. HINDARI MySQL 8.0+ / 8.4 LTS!**
+
+Banyak pengembang baru mengalami kegagalan saat menjalankan SIMRS-Khanza karena menggunakan instalasi MySQL modern (MySQL 8.0 atau MySQL 8.4 LTS). Berikut alasan teknisnya:
+
+1. **Aturan Foreign Key Constraint MySQL 8.0+ / 8.4 LTS Terlalu Ketat:**
+   - MySQL 8.4 mewajibkan setiap kolom yang menjadi target referensi *Foreign Key* harus berstatus **`PRIMARY KEY`** atau **`UNIQUE KEY`**.
+   - Skema basis data bawaan SIMRS-Khanza ([`sik.sql`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/sik.sql)) diekspor dari lingkungan MariaDB, di mana beberapa tabel mereferensikan kolom dengan *regular index* non-unique (contoh: tabel `inacbg_data_terkirim_internal` memiliki foreign key ke kolom `no_sep` pada tabel `bridging_sep_internal` yang bukan primary/unique key).
+   - Akibatnya, pada MySQL 8.4 eksekusi import [`sik.sql`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/sik.sql) akan **terhenti di tengah jalan** dengan pesan:
+     ```text
+     ERROR 6125 (HY000): Failed to add the foreign key constraint. Missing unique key for constraint 'inacbg_data_terkirim_internal_ibfk_1' in the referenced table 'bridging_sep_internal'
+     ```
+   - Dampak fatalnya: Dari total **1.182+ tabel**, proses import berhenti di huruf `i` dan hanya menghasilkan ~316 tabel. Tabel-tabel inti seperti `setting`, `user`, dan `set_tni_polri` **tidak pernah terbuat**, sehingga saat aplikasi dijalankan via `ant run` akan muncul pesan error:
+     ```text
+     Table 'db_khanza_simrs.set_tni_polri' doesn't exist
+     Table 'db_khanza_simrs.setting' doesn't exist
+     Table 'db_khanza_simrs.user' doesn't exist
+     ```
+2. **Kompatibilitas Driver JDBC:**
+   - Folder [`lib/`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/lib) Khanza membundel driver JDBC MySQL Connector/J 5.1.x (`com.mysql.jdbc.Driver`). Driver ini berjalan sangat stabil pada MariaDB 10.x dan MySQL 5.7, tetapi memiliki banyak *incompatibility* terhadap otentikasi dan konfigurasi sistem MySQL 8.x.
+
+---
+
+### 4.2 Menjalankan Service Database (Laragon & Layanan Mandiri)
+
+#### A. Khusus Pengguna Laragon (Windows)
+Jika Anda menggunakan **Laragon**, perhatikan bahwa Laragon sering menyertakan beberapa versi engine database di dalam direktori `C:\laragon\bin\mysql\`.
+Pastikan Laragon menjalankan **MariaDB 10.11**, bukan MySQL 8.4:
+
+1. Buka jendela aplikasi **Laragon**.
+2. Klik tombol **Stop** (atau Stop All).
+3. Klik kanan di area jendela Laragon (atau klik menu **Menu**).
+4. Arahkan ke **MySQL** → **Version** → pilih **`mariadb-10.11.19-winx64`** (pastikan tanda centang aktif di MariaDB).
+5. Klik **Start All**.
+
+> [!TIP]
+> Anda juga dapat memastikan Laragon selalu menjalankan MariaDB secara default dengan memeriksa file [`C:\laragon\usr\laragon.ini`](file:///C:/laragon/usr/laragon.ini):
+> ```ini
+> [mysql]
+> Use=-1
+> Version=mariadb-10.11.19-winx64
+> ```
+
+#### B. Pengguna macOS & Linux
+Pastikan service MariaDB aktif di port default `3306`:
 ```bash
-# macOS (Homebrew MySQL)
-brew services start mysql
+# macOS (Homebrew MariaDB)
+brew services start mariadb
 
 # Linux (systemd)
-sudo systemctl start mysql   # atau mariadb
-sudo systemctl status mysql
+sudo systemctl start mariadb
+sudo systemctl status mariadb
 ```
 
-### 2. Membuat Database `sik`
-Buka terminal MySQL client atau Database Manager:
+---
+
+### 4.3 Membuat Database & Mengimpor Skema (`sik.sql`)
+
+#### 1. Buat Database
+SIMRS-Khanza umumnya menggunakan nama database **`db_khanza_simrs`** atau **`sik`**. Jalankan query pembuatan database:
+
 ```sql
+CREATE DATABASE db_khanza_simrs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- ATAU jika ingin menggunakan nama 'sik':
 CREATE DATABASE sik CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 > [!TIP]
-> Penggunaan charset `utf8mb4` menjamin kompatibilitas penuh terhadap karakter khusus, simbol medis, dan format teks modern tanpa memotong teks (*truncation*).
+> Penggunaan charset `utf8mb4` menjamin kompatibilitas penuh terhadap karakter khusus, simbol medis, dan format teks modern tanpa pemotongan teks (*truncation*).
 
-### 3. Mengimpor Skema Data (`sik.sql`)
-File skema database sudah tersedia di root direktori project. Jalankan perintah import melalui terminal:
+#### 2. Import File Skema (`sik.sql`)
+File skema basis data utama ([`sik.sql`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/sik.sql)) berada di root direktori project. Eksekusi import melalui terminal:
 
 ```bash
-# Dari root folder project SIMRS-Khanza:
+# Jika database Anda bernama db_khanza_simrs:
+mysql -u root -p db_khanza_simrs < sik.sql
+
+# Atau jika database Anda bernama sik:
 mysql -u root -p sik < sik.sql
 ```
 
-*(Opsional)* Jika Anda akan mengembangkan atau menguji integrasi modul laboratorium dan radiologi, import juga skema pelengkap:
+*(Opsional)* Jika Anda mengembangkan modul laboratorium atau radiologi bridging, impor juga file pendukung:
 ```bash
-mysql -u root -p sik < sik_bridging_lab.sql
-mysql -u root -p sik < sik_bridging_radiologi.sql
+mysql -u root -p db_khanza_simrs < sik_bridging_lab.sql
+mysql -u root -p db_khanza_simrs < sik_bridging_radiologi.sql
 ```
 
-### 4. Konfigurasi Kredensial Koneksi (`setting/database.xml`)
-SIMRS-Khanza membaca kredensial database dari file `setting/database.xml` dan `setting/database.ini`. Nilai parameter dienkripsi menggunakan algoritma **AES-128**.
+#### 3. Verifikasi Jumlah Tabel
+Setelah proses import selesai, pastikan seluruh tabel telah dibuat dengan lengkap (**minimal 1.182 tabel**):
+```sql
+SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db_khanza_simrs';
+```
+Jika hasilnya hanya berkisar **300-an tabel**, proses import Anda gagal/terputus. Pastikan Anda mengimpor ke **MariaDB**, bukan MySQL 8.x!
 
-Struktur file `setting/database.xml` default:
+---
+
+### 4.4 Konfigurasi Kredensial: `setting/database.xml` vs `setting/database.ini`
+
+Banyak pengembang keliru mengedit file konfigurasi database. SIMRS-Khanza memiliki **dua file konfigurasi berbeda dengan peruntukan yang berbeda**:
+
+```mermaid
+flowchart LR
+    subgraph JavaApp["Aplikasi Utama (Java)"]
+        JA["SIMRS Khanza Desktop<br>(ant run)"] -->|"Membaca XML Terenkripsi"| XML["setting/database.xml"]
+    end
+
+    subgraph NativeApp["Aplikasi Pendukung (Delphi/C++)"]
+        NA["presensi.exe / resume.exe<br>(Modul Absensi & Resume)"] -->|"Membaca Plaintext INI"| INI["setting/database.ini"]
+    end
+```
+
+1. **[`setting/database.xml`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.xml) (Wajib untuk `ant run`)**:
+   - Dibaca oleh class [`src/fungsi/koneksiDB.java`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/src/fungsi/koneksiDB.java#L78-L87) pada aplikasi Java utama.
+   - Formatnya adalah XML Java Properties yang **seluruh nilainya dienkripsi menggunakan AES 128-bit**.
+2. **[`setting/database.ini`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.ini) (Khusus Delphi/Native)**:
+   - Hanya digunakan oleh aplikasi pendukung bawaan seperti modul absensi fingerprint ([`presensi/presensi.exe`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/presensi/presensi.exe)) dan resume medis ([`resumepasien/resume.exe`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/resumepasien/resume.exe)).
+   - **Mengubah file ini TIDAK BERPENGARUH pada aplikasi utama Java!**
+
+#### Struktur File [`setting/database.xml`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.xml):
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
@@ -488,25 +573,69 @@ Struktur file `setting/database.xml` default:
     <entry key="PORT">nioxtijcpDaKSUiUiP5FAg==</entry>
     <entry key="USER">kMR3WfAwUK6MbhCyydxa0g==</entry>
     <entry key="PAS">l4nh5eVYrLAER/I2A4b3Tw==</entry>
+    <!-- Konfigurasi bridging lainnya... -->
 </properties>
 ```
 
-#### Tabel Nilai Default AES SIMRS-Khanza:
-| Parameter | Plaintext Asli | Nilai Terenkripsi (AES Base64) | Keterangan |
-| :--- | :--- | :--- | :--- |
-| **HOST** | `localhost` | `5k7+C7EnUw9nUv2Nix+DBA==` | Alamat host database |
-| **PORT** | `3306` | `nioxtijcpDaKSUiUiP5FAg==` | Port default MySQL |
-| **DATABASE** | `sik` | `/EmAfBFOYC9C1OXVqPOX8g==` | Nama database |
-| **USER** | `root` | `kMR3WfAwUK6MbhCyydxa0g==` | Username akses MySQL |
-| **PAS (Kosong)** | *(tanpa password)* | `l4nh5eVYrLAER/I2A4b3Tw==` | Password kosong |
+#### Spesifikasi Algoritma Enkripsi AES Khanza:
+- **Kunci Rahasia (*Secret Key*)**: `Bar12345Bar12345` (128-bit)
+- **Vektor Inisialisasi (*IV*)**: `sayangsamakhanza` (16 bytes)
+- **Cipher**: `AES/CBC/PKCS5Padding` di-encode ke Base64 (dikelola oleh class `AESsecurity.EnkripsiAES`).
 
-> [!NOTE]
-> Jika server MySQL lokal Anda menggunakan password khusus (bukan password kosong), Anda dapat membuat string terenkripsi menggunakan sub-project **KhanzaPengenkripsiTeks** yang terdapat di root project:
-> ```bash
-> cd KhanzaPengenkripsiTeks
-> ant run
+#### Tabel Nilai Enkripsi AES Standar Khanza:
+| Parameter | Nilai Plaintext Asli | Nilai Terenkripsi (AES Base64) | Keterangan |
+| :--- | :--- | :--- | :--- |
+| **HOST** | `localhost` | `5k7+C7EnUw9nUv2Nix+DBA==` | Alamat host server database |
+| **PORT** | `3306` | `nioxtijcpDaKSUiUiP5FAg==` | Port default MySQL/MariaDB |
+| **DATABASE** | `db_khanza_simrs` | `/EmAfBFOYC9C1OXVqPOX8g==` | Nama database bawaan repositori |
+| **DATABASE** | `sik` | `AZHNccBwSmSho84f+X8GyQ==` | Nama database alternatif jika Anda memakai `sik` |
+| **USER** | `root` | `kMR3WfAwUK6MbhCyydxa0g==` | Username akun database |
+| **PAS (Kosong)** | *(string kosong)* | `l4nh5eVYrLAER/I2A4b3Tw==` | Password kosong (default) |
+
+> [!TIP]
+> **Cara Melakukan Enkripsi / Dekripsi Sendiri via PowerShell:**  
+> Jika Anda menggunakan nama database atau password MySQL yang berbeda, Anda dapat membuat nilai terenkripsi langsung melalui PowerShell tanpa perlu membuka form GUI:
+> ```powershell
+> # Enkripsi teks ke AES Base64 Khanza:
+> $plain = "nama_database_anda"
+> $key = [System.Text.Encoding]::UTF8.GetBytes("Bar12345Bar12345")
+> $iv  = [System.Text.Encoding]::UTF8.GetBytes("sayangsamakhanza")
+> $aes = [System.Security.Cryptography.Aes]::Create()
+> $aes.Key = $key; $aes.IV = $iv; $aes.Mode = [System.Security.Cryptography.CipherMode]::CBC; $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+> $bytes = [System.Text.Encoding]::UTF8.GetBytes($plain)
+> [Convert]::ToBase64String($aes.CreateEncryptor().TransformFinalBlock($bytes, 0, $bytes.Length))
 > ```
-> Masukkan password Anda pada form enkripsi, salin hasilnya, lalu masukkan ke dalam key `PAS` di file `setting/database.xml`.
+> *(Atau gunakan sub-project GUI yang tersedia di [`KhanzaPengenkripsiTeks`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks)).*
+
+---
+
+### 4.5 Troubleshooting: Error `Table doesn't exist` (`setting`, `user`, `set_tni_polri`)
+
+Jika saat menjalankan `ant run` Anda menemui error di terminal seperti berikut:
+```text
+Notifikasi : com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'db_khanza_simrs.set_tni_polri' doesn't exist
+     [java] com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'db_khanza_simrs.setting' doesn't exist
+     [java] Notifikasi : com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'db_khanza_simrs.user' doesn't exist
+```
+
+Ikuti **Checklist Diagnosis 3 Langkah** berikut:
+
+1. **Periksa Engine yang Sedang Berjalan di Port 3306:**
+   Pastikan port 3306 dipegang oleh MariaDB, bukan MySQL 8.x:
+   ```powershell
+   Get-Process -Name mysqld | Select-Object Id, Path
+   ```
+   Jika path mengarah ke `mysql-8.x`, matikan service tersebut dan beralihlah ke MariaDB 10.x.
+2. **Periksa Jumlah Tabel di Database:**
+   Hitung jumlah tabel pada database yang Anda tuju:
+   ```sql
+   SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db_khanza_simrs';
+   ```
+   - Jika jumlahnya hanya **~316 tabel**, artinya proses import Anda terpotong (sering terjadi karena sebelumnya diimpor di MySQL 8.4). Import ulang [`sik.sql`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/sik.sql) ke dalam MariaDB.
+   - Database yang lengkap harus memiliki **1.182 s/d 1.184 tabel**.
+3. **Periksa Kesesuaian Nama Database di [`setting/database.xml`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.xml):**
+   - Jika Anda mengimpor data ke database bernama **`db_khanza_simrs`**, pastikan key `DATABASE` berisi `/EmAfBFOYC9C1OXVqPOX8g==`.
+   - Jika Anda mengimpor data ke database bernama **`sik`**, pastikan key `DATABASE` berisi `AZHNccBwSmSho84f+X8GyQ==`.
 
 ---
 
