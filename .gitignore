@@ -1,6 +1,6 @@
 # Build & dist outputs
-/build/
-/dist/
+build/
+dist/
 *.class
 
 # Root library directory (physical copy)

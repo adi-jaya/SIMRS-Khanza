@@ -32,6 +32,7 @@ Modul ini mencakup instalasi JDK, Apache Ant, penanganan memori compiler, konfig
   - [4.2 Menjalankan Service Database (Laragon & Layanan Mandiri)](#42-menjalankan-service-database-laragon--layanan-mandiri)
   - [4.3 Membuat Database & Mengimpor Skema (`sik.sql`)](#43-membuat-database--mengimpor-skema-siksql)
   - [4.4 Konfigurasi Kredensial: `setting/database.xml` vs `setting/database.ini`](#44-konfigurasi-kredensial-settingdatabasexml-vs-settingdatabaseini)
+    - [Utilitas Pengenkripsi Teks (`KhanzaPengenkripsiTeks`) via CLI / Terminal](#utilitas-pengenkripsi-teks-khanzapengenkripsiteks-via-cli--terminal)
   - [4.5 Troubleshooting: Error `Table doesn't exist` (`setting`, `user`, `set_tni_polri`)](#45-troubleshooting-error-table-doesnt-exist-setting-user-set_tni_polri)
 - [5. Penanganan Dependensi Fisik (Misteri Folder `lib/`)](#5-penanganan-dependensi-fisik-misteri-folder-lib)
   - [Mengapa Folder `lib/` Masuk `.gitignore`?](#mengapa-folder-lib-masuk-gitignore)
@@ -47,6 +48,11 @@ Modul ini mencakup instalasi JDK, Apache Ant, penanganan memori compiler, konfig
   - [Langkah 2: Build Binary JAR Lengkap](#langkah-2-build-binary-jar-lengkap)
   - [Langkah 3: Menjalankan Aplikasi](#langkah-3-menjalankan-aplikasi)
   - [Kredensial Login Default](#kredensial-login-default)
+- [8. Panduan Menjalankan Subproject (Antrian, APM, Bridging & Web)](#8-panduan-menjalankan-subproject-antrian-apm-bridging--web)
+  - [8.1 Klasifikasi Subproject](#81-klasifikasi-subproject)
+  - [8.2 Tiga Kendala Utama Bawaan Repositori & Solusinya](#82-tiga-kendala-utama-bawaan-repositori--solusinya)
+  - [8.3 Langkah Praktis Menjalankan Subproject Java via CLI](#83-langkah-praktis-menjalankan-subproject-java-via-cli)
+  - [8.4 Subproject Berbasis Web (PHP)](#84-subproject-berbasis-web-php)
 
 ---
 
@@ -592,20 +598,83 @@ flowchart LR
 | **USER** | `root` | `kMR3WfAwUK6MbhCyydxa0g==` | Username akun database |
 | **PAS (Kosong)** | *(string kosong)* | `l4nh5eVYrLAER/I2A4b3Tw==` | Password kosong (default) |
 
-> [!TIP]
-> **Cara Melakukan Enkripsi / Dekripsi Sendiri via PowerShell:**  
-> Jika Anda menggunakan nama database atau password MySQL yang berbeda, Anda dapat membuat nilai terenkripsi langsung melalui PowerShell tanpa perlu membuka form GUI:
-> ```powershell
-> # Enkripsi teks ke AES Base64 Khanza:
-> $plain = "nama_database_anda"
-> $key = [System.Text.Encoding]::UTF8.GetBytes("Bar12345Bar12345")
-> $iv  = [System.Text.Encoding]::UTF8.GetBytes("sayangsamakhanza")
-> $aes = [System.Security.Cryptography.Aes]::Create()
-> $aes.Key = $key; $aes.IV = $iv; $aes.Mode = [System.Security.Cryptography.CipherMode]::CBC; $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-> $bytes = [System.Text.Encoding]::UTF8.GetBytes($plain)
-> [Convert]::ToBase64String($aes.CreateEncryptor().TransformFinalBlock($bytes, 0, $bytes.Length))
-> ```
-> *(Atau gunakan sub-project GUI yang tersedia di [`KhanzaPengenkripsiTeks`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks)).*
+#### Utilitas Pengenkripsi Teks (`KhanzaPengenkripsiTeks`) via CLI / Terminal
+
+Aplikasi SIMRS Khanza menyertakan sub-proyek bernama [`KhanzaPengenkripsiTeks`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks) dengan antarmuka grafis (GUI Java Swing) untuk memudahkan pembuatan teks terenkripsi (seperti password database baru, URL API, secret key BPJS/SatuSehat) sebelum dimasukkan ke dalam file [`setting/database.xml`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.xml).
+
+##### 1. Masalah Bawaan Repositori & Langkah Perbaikan Teknis
+Pada kondisi *fresh clone* repositori bawaan, proyek `KhanzaPengenkripsiTeks` memiliki konfigurasi build yang tidak portabel dan dependensi pustaka yang belum lengkap. Berikut adalah hal-hal yang diperbaiki agar utilitas ini dapat dikompilasi dan dijalankan via terminal:
+
+1. **Memperbaiki Jalur Library (*Hardcoded Path*) di `project.properties`**:
+   - **Masalah**: Berkas [`KhanzaPengenkripsiTeks/nbproject/project.properties`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks/nbproject/project.properties) awalnya mengarah ke jalur absolut macOS pengembang aslinya:
+     ```properties
+     file.reference.KhanzaSecurity16bit.jar=/Users/windiartonugroho/Documents/lib/KhanzaSecurity16bit.jar
+     ```
+     Hal ini menyebabkan proses kompilasi (`ant compile`) gagal karena berkas `.jar` tidak ditemukan.
+   - **Solusi**: Mengubah referensi menjadi jalur relatif terhadap direktori `lib/` proyek lokal:
+     ```properties
+     file.reference.KhanzaSecurity16bit.jar=../lib/KhanzaSecurity16bit.jar
+     file.reference.commons-codec-1.12.jar=../lib/commons-codec-1.12.jar
+     ```
+
+2. **Menambahkan Dependensi Encoder yang Hilang (`commons-codec`)**:
+   - **Masalah**: Pustaka `KhanzaSecurity16bit.jar` di dalamnya mengeksekusi method `org.apache.commons.codec.binary.Base64` untuk melakukan encode/decode byte string AES. Pada konfigurasi bawaan proyek, pustaka `commons-codec` belum terdaftar di `javac.classpath`. Akibatnya, meskipun jendela aplikasi GUI berhasil muncul, saat tombol **Generate** diklik tidak ada reaksi dan Java melemparkan error `java.lang.NoClassDefFoundError: org/apache/commons/codec/binary/Base64` di konsol latar belakang sehingga kolom hasil enkripsi tetap kosong.
+   - **Solusi**: Mendaftarkan `commons-codec-1.12.jar` ke dalam daftar classpath `project.properties`:
+     ```properties
+     javac.classpath=\
+         ${file.reference.KhanzaSecurity16bit.jar}:\
+         ${file.reference.commons-codec-1.12.jar}
+     ```
+
+3. **Membangun Binary Executable JAR**:
+   - Melakukan kompilasi dan pembuatan paket JAR menggunakan Apache Ant dari terminal:
+     ```cmd
+     ant -f KhanzaPengenkripsiTeks/build.xml clean jar
+     ```
+     Perintah ini menghasilkan berkas binary siap pakai di [`KhanzaPengenkripsiTeks/dist/KhanzaPengenkripsiTeks.jar`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks/dist/KhanzaPengenkripsiTeks.jar).
+
+##### 2. Cara Menjalankan Aplikasi GUI via CMD atau PowerShell
+
+Jalankan perintah berikut dari direktori root proyek (`C:\Users\PC-IT\Projects\SIMRS-Khanza`):
+
+- **Opsi A: Menggunakan Command Prompt (CMD) atau PowerShell (Mode Standar)**
+  ```cmd
+  java -cp "KhanzaPengenkripsiTeks\dist\KhanzaPengenkripsiTeks.jar;lib\KhanzaSecurity16bit.jar;lib\commons-codec-1.12.jar" khanzapengenkripsiteks.KhanzaPengenkripsiTeks
+  ```
+
+- **Opsi B: Menggunakan PowerShell Mode Background (`javaw`)**  
+  Menjalankan GUI tanpa menahan prompt terminal (terminal langsung bisa digunakan kembali):
+  ```powershell
+  Start-Process javaw -ArgumentList '-cp "KhanzaPengenkripsiTeks\dist\KhanzaPengenkripsiTeks.jar;lib\KhanzaSecurity16bit.jar;lib\commons-codec-1.12.jar" khanzapengenkripsiteks.KhanzaPengenkripsiTeks'
+  ```
+
+- **Opsi C: Menjalankan Langsung dari Bytecode (`build/classes`)**  
+  Jika file JAR di `dist/` belum dibuild, Anda bisa mengeksekusi langsung class yang sudah terkompilasi:
+  ```cmd
+  java -cp "KhanzaPengenkripsiTeks\build\classes;lib\KhanzaSecurity16bit.jar;lib\commons-codec-1.12.jar" khanzapengenkripsiteks.KhanzaPengenkripsiTeks
+  ```
+
+##### 3. Alternatif Cepat: Enkripsi / Dekripsi Tanpa Membuka GUI
+Jika Anda hanya ingin mengenkripsi atau memeriksa nilai terenkripsi secara cepat di terminal:
+
+- **Cara 1: Menggunakan Java JShell (Memanggil engine internal Khanza langsung):**
+  ```powershell
+  @'
+  System.out.println("Hasil: " + AESsecurity.EnkripsiAES.encrypt("password_anda"));
+  /exit
+  '@ | jshell --class-path "lib/KhanzaSecurity16bit.jar;lib/commons-codec-1.12.jar" -
+  ```
+
+- **Cara 2: Menggunakan PowerShell Native Cryptography (.NET AES-CBC):**
+  ```powershell
+  $plain = "password_anda"
+  $key = [System.Text.Encoding]::UTF8.GetBytes("Bar12345Bar12345")
+  $iv  = [System.Text.Encoding]::UTF8.GetBytes("sayangsamakhanza")
+  $aes = [System.Security.Cryptography.Aes]::Create()
+  $aes.Key = $key; $aes.IV = $iv; $aes.Mode = [System.Security.Cryptography.CipherMode]::CBC; $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($plain)
+  [Convert]::ToBase64String($aes.CreateEncryptor().TransformFinalBlock($bytes, 0, $bytes.Length))
+  ```
 
 ---
 
@@ -965,6 +1034,123 @@ Ketika jendela GUI login SIMRS-Khanza muncul, Anda dapat masuk menggunakan krede
 
 > [!TIP]
 > Jika jendela form login berhasil muncul dan Anda dapat masuk ke Menu Utama, maka setup environment lokal Anda telah **100% tervalidasi dan siap untuk tahap pengembangan**!
+
+---
+
+## 8. Panduan Menjalankan Subproject (Antrian, APM, Bridging & Web)
+
+Selain aplikasi desktop utama SIMRS-Khanza (`SIMRSKhanza.jar`), repositori ini memuat lebih dari 25 subproject pendukung yang berfungsi sebagai mesin antrian, anjungan mandiri pasien, automasi background, integrasi (*bridging*) BPJS & Kemenkes, serta portal web.
+
+---
+
+### 8.1 Klasifikasi Subproject
+
+| Kategori | Nama Subproject | Fungsi & Peruntukan |
+| :--- | :--- | :--- |
+| **Antrian & Cetak** *(Java GUI)* | [`KhanzaAntrianLoket`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaAntrianLoket), [`KhanzaAntrianLoket2`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaAntrianLoket2), [`KhanzaAntrianPoli`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaAntrianPoli), [`KhanzaAntrianApotek`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaAntrianApotek), [`KhanzaCetakAntrianLoket`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaCetakAntrianLoket) | Dipasang di TV display ruang tunggu antrian loket/poli/farmasi dan mesin cetak nomor antrian (touchscreen). Memiliki pemutar audio suara pemanggilan pasien (`suara/`). |
+| **Kiosk / Mandiri (APM)** *(Java GUI)* | [`KhanzaHMSAnjungan`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSAnjungan), [`KhanzaHMSAnjunganFingerPrint`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSAnjunganFingerPrint) | Anjungan Pasien Mandiri (APM) layar sentuh di lobi rumah sakit untuk check-in mandiri / validasi sidik jari BPJS tanpa antre di loket pendaftaran. |
+| **Background Service / Bridging** *(Java)* | [`KhanzaHMSServiceSatuSehat`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceSatuSehat), [`KhanzaHMSServiceMobileJKN`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceMobileJKN), [`KhanzaHMSServiceMobileJKNERM`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceMobileJKNERM), [`KhanzaHMSServiceMobileJKNFKTP`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceMobileJKNFKTP), [`KhanzaHMSServiceAplicare`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceAplicare), [`KhanzaHMSServicePCare`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServicePCare), [`KhanzaHMSServiceSIRSYankes`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceSIRSYankes), [`KhanzaHMSServiceSPDGT`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceSPDGT), [`KhanzaHMSServiceMandiri`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSServiceMandiri) | Layanan sinkronisasi data otomatis di latar belakang (*daemon*) antara database SIMRS lokal dengan API eksternal (BPJS Antrean/VClaim/Aplicares/PCare, Kemenkes SatuSehat FHIR, dan Bank). |
+| **Automasi & Resume** *(Java)* | [`KhanzaHMSAutoVerify`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSAutoVerify), [`KhanzaHMSAutoVerify2`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSAutoVerify2), [`KhanzaHMSResume`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaHMSResume) | Verifikasi otomatis status klaim, billing kasir, dan penarikan resume medis pasien. |
+| **Utilitas** *(Java)* | [`KhanzaPengenkripsiTeks`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaPengenkripsiTeks), [`KhanzaSecurity16bit`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaSecurity16bit), [`KhanzaUpdater`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/KhanzaUpdater) | Enkripsi kredensial konfigurasi, modul keamanan cipher AES, dan pembaruan patch binary. |
+| **Aplikasi Web (PHP)** | `webapps`, `epasien`, `edokter`, `emcu`, `eeksekutif`, `esign`, `bankjateng`, `bjb`, `mandiri`, `api-bpjsfktl`, `api-bpjsfktp`, `api-bridgingradiologi` | Portal web untuk pasien (pendaftaran online), dokter (input resep/soap via browser), manajemen eksekutif, dan webhook pembayaran perbankan. |
+
+---
+
+### 8.2 Tiga Kendala Utama Bawaan Repositori & Solusinya
+
+Jika Anda mencoba langsung mengompilasi atau menjalankan subproject Java di atas dari repositori *fresh clone*, Anda akan menemui kegagalan. Hal ini disebabkan oleh 3 faktor:
+
+1. **Path Pustaka Hardcoded macOS di `project.properties`**:
+   Pada 16 subproject Java, berkas `nbproject/project.properties` masih memuat path absolut mesin macOS pengembang aslinya:
+   ```properties
+   file.reference.activation-1.1.1.jar=/Users/windiartonugroho/Documents/lib/activation-1.1.1.jar
+   # atau
+   file.reference.activation-1.1.1.jar=/Users/windiartonugroho/lib/activation-1.1.1.jar
+   ```
+   Di Windows maupun Linux, path ini tidak ada sehingga compiler melemparkan ratusan error `cannot find symbol` atau `package does not exist`.  
+   👉 **Solusi**: Ubah seluruh path `/Users/windiartonugroho/.../lib/` menjadi path relatif `../lib/` (seluruh berkas JAR fisik berada di folder `lib/` root proyek).
+
+2. **File Konfigurasi Database Terpisah (`setting/database.xml`)**:
+   Masing-masing subproject memiliki berkas konfigurasi database sendiri di `<FolderSubproject>/setting/database.xml`. Jika database Anda memiliki user/password/nama database yang berbeda dari default pabrikan, Anda wajib menyinkronkan file konfigurasi ini ke subproject yang ingin dijalankan.  
+   👉 **Solusi**: Salin berkas [`setting/database.xml`](file:///C:/Users/PC-IT/Projects/SIMRS-Khanza/setting/database.xml) dari root direktori ke folder subproject target.
+
+3. **Direktori Kerja (*Working Directory* / CWD) dan Aset Lokal**:
+   Aplikasi subproject memuat file aset (seperti file audio pemanggil antrian di folder `suara/`, berkas template laporan di `report/`, dan `setting/database.xml`) secara relatif terhadap direktori kerja proses saat ini. Jika Anda menjalankannya dari root tanpa berpindah direktori, aplikasi tidak dapat menemukan file audio atau file koneksi database.  
+   👉 **Solusi**: Selalu berpindah (*cd*) ke dalam folder subproject tersebut sebelum mengeksekusi perintah `java -jar`.
+
+---
+
+### 8.3 Langkah Praktis Menjalankan Subproject Java via CLI
+
+Ikuti 4 langkah terstruktur berikut:
+
+#### Langkah 1: Perbaiki Path Library Seluruh Subproject (Sekali Eksekusi)
+Jalankan skrip PowerShell berikut di root proyek (`C:\Users\PC-IT\Projects\SIMRS-Khanza`). Perintah ini secara otomatis memindai dan memperbaiki berkas `project.properties` pada seluruh subproject:
+
+```powershell
+Get-ChildItem -Path "*/nbproject/project.properties" | ForEach-Object {
+    $content = Get-Content $_.FullName -Raw
+    $newContent = $content -replace "/Users/windiartonugroho/Documents/lib/", "../lib/" `
+                           -replace "/Users/windiartonugroho/lib/", "../lib/"
+    if ($content -ne $newContent) {
+        Set-Content $_.FullName -Value $newContent -NoNewline
+        Write-Host "Berhasil diperbaiki: $($_.Directory.Parent.Name)" -ForegroundColor Green
+    }
+}
+```
+
+#### Langkah 2: Sinkronkan Konfigurasi Database
+Salin file konfigurasi database dari root proyek ke subproject yang ingin dijalankan:
+
+```powershell
+# Contoh menyalin ke subproject KhanzaAntrianPoli:
+Copy-Item setting\database.xml KhanzaAntrianPoli\setting\database.xml -Force
+
+# Contoh menyalin ke subproject KhanzaHMSServiceSatuSehat:
+Copy-Item setting\database.xml KhanzaHMSServiceSatuSehat\setting\database.xml -Force
+```
+
+#### Langkah 3: Build Binary Executable JAR
+Gunakan target Ant untuk mengompilasi dan membungkus subproject ke dalam berkas binary JAR:
+
+```cmd
+# Format: ant -f <NamaSubproject>/build.xml clean jar
+ant -f KhanzaAntrianPoli/build.xml clean jar
+```
+Hasil build akan tersimpan di dalam folder `<NamaSubproject>/dist/`.
+
+#### Langkah 4: Jalankan Subproject
+Masuk ke dalam direktori subproject tersebut lalu jalankan file binary JAR:
+
+**Via Command Prompt (CMD) / PowerShell:**
+```cmd
+cd KhanzaAntrianPoli
+java -jar dist/KhanzaAntrianPoli.jar
+```
+
+**Via NetBeans IDE:**
+1. Buka menu **File** > **Open Project...**
+2. Pilih folder subproject yang bersangkutan (misal `KhanzaAntrianPoli`).
+3. Klik kanan pada project di panel kiri, lalu pilih **Run** (atau tekan **F6**).
+
+---
+
+### 8.4 Subproject Berbasis Web (PHP)
+
+Subproject seperti `webapps`, `epasien`, `edokter`, `emcu`, dan `esign` **bukanlah aplikasi Java Swing/Ant**, melainkan modul berbasis web PHP:
+
+1. **Deploy ke Web Server**:
+   Arahkan DocumentRoot web server lokal Anda (Laragon `www/` atau XAMPP `htdocs/`) ke folder proyek SIMRS-Khanza, atau buat virtual host/symlink:
+   ```text
+   http://localhost/webapps/
+   http://localhost/epasien/
+   http://localhost/edokter/
+   ```
+2. **Konfigurasi Database PHP**:
+   Konfigurasi koneksi MySQL untuk modul PHP diatur terpisah pada file:
+   - `webapps/conf/conf.php`
+   - `epasien/conf/conf.php`
+   *(Pastikan kredensial host, port, user, password, dan nama database di `conf.php` sesuai dengan service database MySQL/MariaDB lokal Anda).*
 
 ---
 
