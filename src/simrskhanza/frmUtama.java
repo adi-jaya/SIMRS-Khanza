@@ -23,6 +23,7 @@ import setting.DlgRunTeks;
 import laporan.DlgSirkulasiBerkas;
 import permintaan.DlgCariPermintaanLab;
 import permintaan.DlgBookingRegistrasi;
+import permintaan.DlgPermintaanRujukanFaskes;
 import permintaan.DlgBookingOperasi;
 import surat.SuratKontrol;
 import kepegawaian.DlgPenggajian;
@@ -1684,6 +1685,7 @@ public class frmUtama extends javax.swing.JFrame {
         btnBarangCSSD = new widget.ButtonBig();
         btnSKDPBPJS = new widget.ButtonBig();
         btnBookingRegistrasi = new widget.ButtonBig();
+        btnPermintaanRujukanFaskes = new widget.ButtonBig();
         btnCekReferensiPropinsiBPJS = new widget.ButtonBig();
         btnCekReferensiKabupatenBPJS = new widget.ButtonBig();
         btnCekReferensiKecamatanBPJS = new widget.ButtonBig();
@@ -5982,6 +5984,17 @@ public class frmUtama extends javax.swing.JFrame {
         btnBookingRegistrasi.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnBookingRegistrasiActionPerformed(evt);
+            }
+        });
+
+        btnPermintaanRujukanFaskes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/48x48/1485357935_ambulance.png"))); // NOI18N
+        btnPermintaanRujukanFaskes.setText("Rujukan Masuk FASKES");
+        btnPermintaanRujukanFaskes.setIconTextGap(0);
+        btnPermintaanRujukanFaskes.setName("btnPermintaanRujukanFaskes"); // NOI18N
+        btnPermintaanRujukanFaskes.setPreferredSize(new java.awt.Dimension(200, 90));
+        btnPermintaanRujukanFaskes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPermintaanRujukanFaskesActionPerformed(evt);
             }
         });
 
@@ -13314,6 +13327,17 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         DlgHome.dispose();
         this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_btnBookingRegistrasiActionPerformed
+
+    private void btnPermintaanRujukanFaskesActionPerformed(java.awt.event.ActionEvent evt) {
+        isTutup();
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        DlgPermintaanRujukanFaskes form = new DlgPermintaanRujukanFaskes(this, false);
+        form.setSize(PanelUtama.getWidth(), PanelUtama.getHeight());
+        form.setLocationRelativeTo(PanelUtama);
+        form.setVisible(true);
+        DlgHome.dispose();
+        this.setCursor(Cursor.getDefaultCursor());
+    }
 
     private void btnCekReferensiPropinsiBPJSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCekReferensiPropinsiBPJSActionPerformed
         isTutup();
@@ -23794,6 +23818,7 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
     private widget.ButtonBig btnBerkasDigitalPerawatan;
     private widget.ButtonBig btnBerkasPegawai;
     private widget.ButtonBig btnBookingRegistrasi;
+    private widget.ButtonBig btnPermintaanRujukanFaskes;
     private widget.ButtonBig btnBubes;
     private widget.ButtonBig btnBulananHAIs;
     private widget.ButtonBig btnCacatFisik;
@@ -24553,6 +24578,11 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
             
             if(akses.getbooking_registrasi()==true){
                 Panelmenu.add(btnBookingRegistrasi);
+                jmlmenu++;
+            }
+            
+            if(akses.getpermintaan_rujukan_faskes()==true){
+                Panelmenu.add(btnPermintaanRujukanFaskes);
                 jmlmenu++;
             }
             
@@ -30620,6 +30650,11 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
             jmlmenu++;
         }
         
+        if(akses.getpermintaan_rujukan_faskes()==true){
+            Panelmenu.add(btnPermintaanRujukanFaskes);
+            jmlmenu++;
+        }
+        
         if(akses.getbooking_mcu_perusahaan()==true){
             Panelmenu.add(btnBookingMCUPerusahaan);
             jmlmenu++;
@@ -36645,6 +36680,13 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         if(akses.getbooking_registrasi()==true){
             if(btnBookingRegistrasi.getText().toLowerCase().trim().contains(TCari.getText().toLowerCase().trim())){
                 Panelmenu.add(btnBookingRegistrasi);
+                jmlmenu++;
+            }                
+        }
+        
+        if(akses.getpermintaan_rujukan_faskes()==true){
+            if(btnPermintaanRujukanFaskes.getText().toLowerCase().trim().contains(TCari.getText().toLowerCase().trim())){
+                Panelmenu.add(btnPermintaanRujukanFaskes);
                 jmlmenu++;
             }                
         }

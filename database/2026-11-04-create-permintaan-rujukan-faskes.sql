@@ -39,3 +39,7 @@ CREATE TABLE IF NOT EXISTS `permintaan_rujukan_faskes` (
   KEY `idx_no_ktp` (`no_ktp`),
   KEY `idx_nama_pasien` (`nama_pasien`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- Penambahan Hak Akses User SIMRS Khanza (Opsional jika hak akses user spesifik diperlukan):
+-- ALTER TABLE `user` ADD COLUMN `permintaan_rujukan_faskes` enum('true','false') DEFAULT 'false';
+
