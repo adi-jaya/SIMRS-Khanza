@@ -51,7 +51,7 @@ graph TD
 
 ---
 
-## 2. Tabel Peta Navigasi Terpadu (Modul 01 s/d 05)
+## 2. Tabel Peta Navigasi Terpadu (Modul 01 s/d 06)
 
 Dokumentasi ini dirancang modular agar Anda dapat langsung mengakses topik yang relevan dengan kebutuhan tugas Anda:
 
@@ -62,6 +62,7 @@ Dokumentasi ini dirancang modular agar Anda dapat langsung mengakses topik yang 
 | **03** | **Arsitektur & Anatomi Kode Sumber** | **Software Architect & Core Dev**: Bedah direktori package `src/`, core engine `src/fungsi/` (`koneksiDB`, `sekuel`, `validasi`, `akses`), mekanisme enkripsi AES-128 `setting/database.xml`, anatomi NetBeans Matisse GUI, serta protokol bridging BPJS & SatuSehat. | [Buka Panduan Modul 03](03-architecture-and-codebase.md) |
 | **04** | **Alur Kerja Pengembangan & Troubleshooting** | **Daily Engineer & DevOps**: Siklus *build* Apache Ant (`compile`, `run`, `jar`), *fast-iteration workflow* VS Code, manajemen Git & sinkronisasi upstream resmi, serta katalog solusi error database, memory, dan IDE. | [Buka Panduan Modul 04](04-development-workflow.md) |
 | **05** | **Roadmap Pembelajaran & Resep Fitur** | **Fullstack Feature Developer**: Kurikulum 4 level belajar, resep pembuatan form CRUD Master baru dari nol, penelusuran alur transaksi inti RS (Registrasi → Rawat Jalan/SOAP → Farmasi → Kasir), kustomisasi JasperReports, dan blueprint REST API bridging. | [Buka Panduan Modul 05](05-feature-roadmap-and-recipes.md) |
+| **06** | **Fitur Rujukan Masuk FASKES (IGD)** | **Tim Triase IGD, Rekam Medis & Fullstack Developer**: Panduan implementasi & operasional modul desktop pemantauan rujukan darurat dari FKTP, integrasi database `sik`, update status kedatangan inline, cetak resume rekam medis HTML, dan keterkaitan lintas aplikasi dengan Web Official & PortalSifast. | [Buka Panduan Modul 06](06-fitur-rujukan-masuk-faskes.md) |
 
 ---
 
@@ -87,11 +88,17 @@ graph LR
         C1["Modul 04: Troubleshooting"] --> C2["Modul 03: Core fungsi.*"]
         C2 --> C3["Modul 05: Alur Transaksi"]
     end
+
+    subgraph Path_D["Jalur 4: Integrasi Web & Triase IGD (Rujukan FASKES)"]
+        D1["Modul 06: Fitur Rujukan Masuk"] --> D2["Modul 03: Arsitektur & Otorisasi akses.*"]
+        D2 --> D3["PortalSifast API & Web Official"]
+    end
 ```
 
 - **Jalur 1 — Pengembang Baru (*Fresh Onboarding*)**: Mulai dari [Modul 01 (Non-NetBeans/VS Code)](01-getting-started-non-netbeans-vscode.md) untuk setup environment lokal, lanjutkan ke [Modul 03](03-architecture-and-codebase.md) untuk memahami struktur folder, lalu pelajari alur build di [Modul 04](04-development-workflow.md) dan praktikkan [Modul 05](05-feature-roadmap-and-recipes.md).
 - **Jalur 2 — Pengembang Web (*Laravel/Node.js/Django*)**: Wajib membaca [Modul 02](02-laravel-to-java-guide.md) terlebih dahulu untuk memetakan analogi konsep web ke desktop, kemudian ikuti [Modul 01](01-getting-started-non-netbeans-vscode.md) dan [Modul 03](03-architecture-and-codebase.md).
 - **Jalur 3 — Penanganan Masalah & Pemeliharaan (*Maintenance*)**: Buka langsung [Modul 04 (Katalog Troubleshooting)](04-development-workflow.md#4-katalog-troubleshooting-komprehensif) dan [Modul 03 (Bedah Core Engine)](03-architecture-and-codebase.md#2-bedah-core-engine-di-srcfungsi).
+- **Jalur 4 — Integrasi Web Official & Triase Gawat Darurat (IGD)**: Buka [Modul 06 (Fitur Rujukan Masuk FASKES)](06-fitur-rujukan-masuk-faskes.md) untuk memahami alur pra-hospital, tabel `permintaan_rujukan_faskes`, update status kedatangan, dan cetak resume HTML untuk berkas RM fisik.
 
 ---
 

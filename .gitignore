@@ -3,6 +3,11 @@ build/
 dist/
 *.class
 
+# Runtime generated export reports
+ResumeRujukanFaskes.html
+LaporanPermintaanRujukanFaskes.html
+*.html
+
 # Root library directory (physical copy)
 /lib/
 /lib32/
